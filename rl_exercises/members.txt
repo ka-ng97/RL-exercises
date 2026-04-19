@@ -1,3 +1,2 @@
-member 1: me
-member 2: 
-member 3: 
+member 1: Quang Ky Anh Nguyen
+member 2: Anh Khoa Pham
