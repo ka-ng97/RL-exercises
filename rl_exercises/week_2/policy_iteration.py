@@ -86,14 +86,20 @@ class PolicyIteration(AbstractAgent):
             The selected action and an empty info dictionary.
         """
         # TODO: Return the action according to current policy
-        raise NotImplementedError("predict_action() is not implemented.")
+        a = int(self.pi[observation])
+        return a, {}
 
     def update_agent(self, *args: tuple, **kwargs: dict) -> None:
         """Run policy iteration to compute the optimal policy and state-action values."""
         if not self.policy_fitted:
             # TODO: Call policy iteration with initialized values
             printr("Initial policy: ", self.pi)
-            raise NotImplementedError("update_agent() is not implemented.")
+            # raise NotImplementedError("update_agent() is not implemented.")
+            self.Q, self.pi, self.steps = policy_iteration(
+                self.Q,
+                self.pi,
+                (self.S, self.A, self.T, self.R_sa, self.gamma),
+            )
             printr("Q: ", self.Q)
             printr("Final policy: ", self.pi)
             printr("Policy iteration steps:", self.steps)
@@ -159,7 +165,14 @@ def policy_evaluation(
     V = np.zeros(nS)
 
     # TODO: implement Policy Evaluation for all states
-
+    track_converge = 0
+    while track_converge >= epsilon:
+        # while True:
+        oldV = V.copy()
+        for s in range(nS):
+            a = pi[s]
+            V[s] = R_sa[s, a] + gamma * np.sum(T[s, a] * V)
+        track_converge = np.max(np.abs(V - oldV))
     return V
 
 
@@ -192,7 +205,11 @@ def policy_improvement(
     Q = np.zeros((nS, nA))
     pi_new = None
     # TODO: implement Policy Improvement for all states
+    for s in range(nS):
+        for a in range(nA):
+            Q[s, a] = R_sa[s, a] + gamma * np.sum(T[s, a, :] * V)
 
+    pi_new = np.argmax(Q, axis=1)
     return Q, pi_new
 
 
@@ -224,6 +241,16 @@ def policy_iteration(
     S, A, T, R_sa, gamma = MDP
 
     # TODO: Combine evaluation and improvement in a loop.
+    policyIsIndentical = False
+    numImprovSteps = 0
+    while not policyIsIndentical:
+        # while True:
+        oldPi = pi.copy()
+        V = policy_evaluation(pi, T, R_sa, gamma, epsilon)
+        Q, pi = policy_improvement(V, T, R_sa, gamma)
+        numImprovSteps += 1
+        policyIsIndentical = np.array_equal(oldPi, pi)
+    return Q, pi, numImprovSteps
 
 
 if __name__ == "__main__":

@@ -65,13 +65,17 @@ class ValueIteration(AbstractAgent):
             return
 
         # TODO: Call value_iteration() with the MDP components
-        V_opt, pi_opt = None, None  # placeholder
-
+        V_opt, pi_opt = value_iteration(
+            T=self.T,
+            R_sa=self.R_sa,
+            gamma=self.gamma,
+            seed=self.seed,
+        )
         self.V = V_opt
         self.pi = pi_opt
         printr("Converged V:", self.V)
         printr("Derived policy π:", self.pi)
-        # self.policy_fitted = True # TODO: uncomment this after implementation
+        self.policy_fitted = True  # TODO: uncomment this after implementation
 
     def predict_action(
         self,
@@ -84,7 +88,8 @@ class ValueIteration(AbstractAgent):
             self.update_agent()
 
         # TODO: Return action from learned policy
-        raise NotImplementedError("predict_action() is not implemented.")
+        a = int(self.pi[observation])
+        return a, {}
 
 
 def value_iteration(
@@ -128,7 +133,32 @@ def value_iteration(
     pi = None
 
     # TODO: update V using the Q values until convergence
+    track_converge = 0
+    rng = np.random.default_rng(seed)
+    pi = np.zeros(n_states, dtype=int)
+    while track_converge >= epsilon:
+        # while True:
+        # oldV = V[s]
+        oldV = V.copy()
+        Q = np.zeros((n_states, n_actions))
+
+        for s in range(n_states):
+            for a in range(n_actions):
+                # Q(s, a) = R(s, a) + γ * Σ_s' T(s, a, s') * V(s')
+                Q[s, a] = R_sa[s, a] + gamma * np.sum(T[s, a, :] * oldV)
+
+            V[s] = np.max(Q[s, :])
+
+        track_converge = np.max(np.abs(V - oldV))
 
     # TODO: Extract the greedy policy from V and update pi
+    for s in range(n_states):
+        Q = np.zeros(n_actions)
 
+        for a in range(n_actions):
+            Q[a] = R_sa[s, a] + gamma * np.sum(T[s, a, :] * V)
+
+        # handle ties randomly
+        best_actions = np.where(Q == np.max(Q))[0]
+        pi[s] = rng.choice(best_actions)
     return V, pi

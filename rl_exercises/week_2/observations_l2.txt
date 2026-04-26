@@ -1,0 +1,4 @@
+It is not possible to implement both methods if only step() is accessible because the formula for computing policy iterations 
+    V[s] = R_sa[s, a] + gamma * np.sum(T[s, a, :] * V)
+    
+requires the R_sa which is the rewards for each action and state. Without it, we cannot calculate the evaluation for V and therefore cannot calculate the improvement for Q-Table. 
